@@ -1,0 +1,31 @@
+
+<ObjectInfo>
+    <id>12</id>
+    <name>field</name>
+    <district>Pervomay</district>
+    <address>address</address>
+    <type>sloman</type>
+    <space>345</space>
+    <owner_id>122</owner_id>
+    <factial_user>Boob</factial_user>
+    <desc>description</desc>
+    <responsibles>Victor</responsibles>
+    <responsibles>Filter</responsibles>
+    <status>ok</status>
+    <stages>
+        <name>stage</name>
+        <desc>string</desc>
+        <limit_date>60</limit_date>
+        <current_date>1245</current_date>
+        <status>ok</status>
+        <responsible>Victor</responsible>
+    </stages>
+     <stages>
+        <name>stage2</name>
+        <desc>string2</desc>
+        <limit_date>60</limit_date>
+        <current_date>1245</current_date>
+        <status>ok</status>
+        <responsible>Victor</responsible>
+    </stages>
+</ObjectInfo>
