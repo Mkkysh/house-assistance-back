@@ -145,13 +145,36 @@ app.get("/api/filter", jsonParser, async (request, response) => {
 app.get("/api/object/:id", jsonParser, async (request, response) => {
     try {
         let id = new ObjectID(request.params.id);
-        let obj = await ObjectInfo.find({_id: id});
-        response.status(200).send(obj);
+        let obj = await ObjectInfo.findOne({_id: id});
+        fields = {
+            name: true,
+            picture: true,
+            _id: true
+        }
+        let user = await UserInfo.findOne({_id: obj.owner_id}, fields);
+        let fact_use = await UserInfo.find({_id: obj.factial_user}, fields);
+        response.status(200).send({object: obj, owner: user, fact_us: fact_use});
     }
     catch(err){
-        console.log(err);
         response.status(404).send("not found");
     }
+});
+
+app.get("/api/user/:id", jsonParser, async (request, response) => {
+    let id = new ObjectID(request.params.id);
+    let userFilter = {password: false}
+    let user = await UserInfo.findById(id, userFilter);
+    let fields = {
+        address: true,
+        status: true,
+        type: true,
+        area: true,
+        field: true,
+        pictures: {$slice: 1}
+    }
+    let userObjects = await ObjectInfo.find({owner_id: id}, fields);
+    if(!user) response.status(404)
+    else response.status(200).send({user: user, objects: userObjects});
 });
 
 app.post("/api/newobject", jsonParser, async (request, response) => {
