@@ -219,8 +219,6 @@ app.put("/api/editobj/:id", jsonParser, async (request, response) => {
 
 app.get("/api/findUser", jsonParser, async (request, response) => {
     let req = `(?i)${request.body.name}(?-i)`;
-    console.log(req)
-    let filter = {name: {$regex: req}};
     let users = await UserInfo.find().regex("name", req)
     response.send(users)
 });
