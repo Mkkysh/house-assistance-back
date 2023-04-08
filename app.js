@@ -207,20 +207,21 @@ app.put("/api/editobj/:id", jsonParser, async (request, response) => {
     let id = new ObjectID(request.params.id);
     update = request.body.objinf
     let owner_id = request.body.objinf.owner_id;
-    let factial_user = request.body.objinf.factial_user
+    let factial_user = request.body.objinf.factial_user;
 
     if(owner_id) {let owner_id_obj = new mongoose.Types.ObjectId(owner_id); update.owner_id = owner_id_obj;}
     if(factial_user) {let f_u = factial_user.map(elem => new mongoose.Types.ObjectId(elem)); update.factial_user = f_u;}
 
-    let obj = await ObjectInfo.findOneAndUpdate({_id: id}, update, {new: true})
-    if(!obj) response.status(404)
-    else response.send(obj)
+    let obj = await ObjectInfo.findOneAndUpdate({_id: id}, update, {new: true});
+    if(!obj) response.status(404);
+    else response.send(obj);
 });
 
 app.get("/api/findUser", jsonParser, async (request, response) => {
     let req = `(?i)${request.body.name}(?-i)`;
-    let users = await UserInfo.find().regex("name", req)
-    response.send(users)
+    let users = await UserInfo.find().regex("name", req);
+    if(users) response.send(users);
+    else response.status(404);
 });
 
 main();
