@@ -14,6 +14,7 @@ const jsonParser = express.json();
 
 const PORT = 3000;
 const app = express();
+const test = 0;
 
 const objectInfoScheme = new Schema({
     "lastdate": Date,
