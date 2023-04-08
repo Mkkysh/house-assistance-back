@@ -90,6 +90,7 @@ app.post("/api/user/login", jsonParser, async (request, response) => {
 app.post("/api/page", jsonParser, async (request, response) => {
     let { page, sort, sortDirection, status, field, district, type, maxArea, minArea} = request.body;
     page = !page ? 0 : page;
+    const count_objs = 2;
 
     let filter = {}
     let sorter = {}
@@ -113,12 +114,14 @@ app.post("/api/page", jsonParser, async (request, response) => {
 
     if (sort && (sortDirection!==undefined)){
         sorter[`${sort}`] = sortDirection
-        objs = await ObjectInfo.find(filter, fields).sort(sorter).skip(page*20).limit(20);
+        objs = await ObjectInfo.find(filter, fields).sort(sorter).skip(page*count_objs).limit(count_objs);
     }
     else 
-        objs = await ObjectInfo.find(filter, fields).skip(page*20).limit(20); 
+        objs = await ObjectInfo.find(filter, fields).skip(page*count_objs).limit(count_objs); 
 
-    response.send(objs);
+    let countPage = objs.length/count_objs + 1
+
+    response.send({objects: objs, pages: countPage});
 });
 
 app.get("/api/filter", jsonParser, async (request, response) => {
@@ -150,6 +153,9 @@ app.get("/api/object/:id", jsonParser, async (request, response) => {
     }
 });
 
+app.post("/api/newobject", jsonParser, async (request, response) => {
+    response.send(request.body.objinf)
+});
 
 
 main();
