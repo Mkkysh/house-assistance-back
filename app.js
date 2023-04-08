@@ -4,6 +4,8 @@ const fs = require("fs")
 const jwt = require("jsonwebtoken");
 const mongoose = require("mongoose");
 const bodyParser = require("body-parser");
+const { ObjectID } = require("bson");
+const { object } = require("webidl-conversions");
 const Schema = mongoose.Schema;
 const MongoClient = require("mongodb").MongoClient;
 
@@ -85,31 +87,6 @@ app.post("/api/user/login", jsonParser, async (request, response) => {
       }
 });
 
-app.post("/api/index/page", jsonParser, async (request, response) => {
-    let { page, sort, sortDirection, status, field, district, type, maxArea, minArea} = request.body;
-    page = !page ? 0 : page;
-
-    let filter = {}
-    let sorter = {}
-
-    if(type) filter.type = type; if(district) filter.district = district;
-    if(field) filter.field = field; if(status) filter.status = status;
-    if(maxArea||minArea)
-        filter.$and = []
-    if(maxArea) filter.$and.push({area: {$lte: maxArea}}); if(minArea) filter.$and.push({area: {$gte: minArea}}) 
-
-    let objs = {}
-
-    if (sort && (sortDirection!==undefined)){
-        sorter[`${sort}`] = sortDirection
-        objs = await ObjectInfo.find(filter).sort(sorter).skip(page*2).limit(2);
-    }
-    else 
-        objs = await ObjectInfo.find(filter).skip(page*2).limit(2); 
-
-    response.send(objs);
-});
-
 app.post("/api/page", jsonParser, async (request, response) => {
     let { page, sort, sortDirection, status, field, district, type, maxArea, minArea} = request.body;
     page = !page ? 0 : page;
@@ -123,14 +100,22 @@ app.post("/api/page", jsonParser, async (request, response) => {
         filter.$and = []
     if(maxArea) filter.$and.push({area: {$lte: maxArea}}); if(minArea) filter.$and.push({area: {$gte: minArea}}) 
 
+    let fields = {
+        address: true,
+        status: true,
+        type: true,
+        area: true,
+        field: true
+    }
+
     let objs = {}
 
     if (sort && (sortDirection!==undefined)){
         sorter[`${sort}`] = sortDirection
-        objs = await ObjectInfo.find(filter).sort(sorter).skip(page*2).limit(2);
+        objs = await ObjectInfo.find(filter, fields).sort(sorter).skip(page*20).limit(20);
     }
     else 
-        objs = await ObjectInfo.find(filter).skip(page*2).limit(2); 
+        objs = await ObjectInfo.find(filter, fields).skip(page*20).limit(20); 
 
     response.send(objs);
 });
@@ -150,6 +135,18 @@ app.get("/api/filter", jsonParser, async (request, response) => {
 
     response.send(filters)
     
+});
+
+app.get("/api/object/:id", jsonParser, async (request, response) => {
+    try {
+        let id = new ObjectID(request.params.id)
+        let obj = await ObjectInfo.find({_id: id});
+        response.status(200).send(obj);
+    }
+    catch(err){
+        console.log(err)
+        response.status(404).send("not found")
+    }
 });
 
 main();
