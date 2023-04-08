@@ -191,8 +191,9 @@ app.post("/api/newobject", jsonParser, async (request, response) => {
     console.log(new ObjectID(owner_id))
 
     let obj = new mongoose.Types.ObjectId(owner_id)
+    let f_u = factial_user.map(elem => new mongoose.Types.ObjectId(elem))
     await ObjectInfo.collection.insertOne({...request.body.objinf, firstdate: new Date(Date.now()), 
-        lastdate:new Date(Date.now()), owner_id: obj});
+        lastdate:new Date(Date.now()), owner_id: obj, factial_user: f_u});
     
     response.send("hi");
     
