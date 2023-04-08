@@ -32,17 +32,17 @@ const objectInfoScheme = new Schema({
 	"documents": Array,
 	"desc": String,
 	"status": String,
-	"stages":
-	{
-		"documents": Array,
-		"photos": Array,
-		"name": String,
-		"desc": String,
-		"limit_date": Date,
-		"current_date": Date,
-		"status": String,
-		"responsibles": String
-	}
+	"stages": Array
+	// {
+	// 	"documents": Array,
+	// 	"photos": Array,
+	// 	"name": String,
+	// 	"desc": String,
+	// 	"limit_date": Date,
+	// 	"current_date": Date,
+	// 	"status": String,
+	// 	"responsibles": String
+	// }
 }, {collection: "objectInfo"});
 
 const userInfo = new Schema({
@@ -160,12 +160,15 @@ app.get("/api/object/:id", jsonParser, async (request, response) => {
 });
 
 app.post("/api/newobject", jsonParser, async (request, response) => {
+    
+    let users = []
 
-    let obj = new UserInfo(request.body.objinf)
-    await obj.save((err)=>{
-        if (err) response.status(404).send("error"); 
 
-    })
+    
+    await ObjectInfo.collection.insertOne({...request.body.objinf, firstdate: new Date(Date.now()), 
+                                        lastdate:new Date(Date.now())});
+    
+
     
     response.send(request.body.objinf);
     
