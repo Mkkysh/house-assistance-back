@@ -27,11 +27,10 @@ const objectInfoScheme = new Schema({
 	"type": String,
 	"area": Number,
 	"owner_id": String,
-	"factial_user": String,
+	"factial_user": Array,
 	"pictures": Array,
 	"documents": Array,
 	"desc": String,
-	"responsibles": Array,
 	"status": String,
 	"stages":
 	{
@@ -57,8 +56,11 @@ const userInfo = new Schema({
 	"password": String
 }, {collection: "userInfo"})
 
-test
+const testScheme = new Schema({
+    "test": String
+}, {collection: "test"})
 
+const test = mongoose.model("test", testScheme);
 const ObjectInfo = mongoose.model("objectInfo", objectInfoScheme);
 const UserInfo =  mongoose.model("userInfo", userInfo);
 
@@ -123,7 +125,7 @@ app.post("/api/page", jsonParser, async (request, response) => {
     else 
         objs = await ObjectInfo.find(filter, fields).skip(page*count_objs).limit(count_objs); 
 
-    let countPage = objs.length/count_objs + 1;
+    let countPage = Math.ceil(objs.length/count_objs);
 
     response.send({objects: objs, pages: countPage});
 });
@@ -162,6 +164,7 @@ app.post("/api/newobject", jsonParser, async (request, response) => {
     let obj = new UserInfo(request.body.objinf)
     await obj.save((err)=>{
         if (err) response.status(404).send("error"); 
+
     })
     
     response.send(request.body.objinf);
