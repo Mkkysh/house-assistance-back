@@ -15,6 +15,8 @@ const jsonParser = express.json();
 const PORT = 3000;
 const app = express();
 
+
+
 const objectInfoScheme = new Schema({
     "lastdate": Date,
     "firstdate": Date,
@@ -54,6 +56,8 @@ const userInfo = new Schema({
 	"id_pr": Array,
 	"password": String
 }, {collection: "userInfo"})
+
+test
 
 const ObjectInfo = mongoose.model("objectInfo", objectInfoScheme);
 const UserInfo =  mongoose.model("userInfo", userInfo);
@@ -155,14 +159,13 @@ app.get("/api/object/:id", jsonParser, async (request, response) => {
 
 app.post("/api/newobject", jsonParser, async (request, response) => {
 
-    /*let obj = new UserInfo(request.body.objinf)
-    obj.save((err)=>{
-        if (err) response.status(404); 
+    let obj = new UserInfo(request.body.objinf)
+    await obj.save((err)=>{
+        if (err) response.status(404).send("error"); 
     })
     
     response.send(request.body.objinf);
-    */
-
+    
 });
 
 
