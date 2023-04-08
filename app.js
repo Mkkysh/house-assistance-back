@@ -166,7 +166,7 @@ app.get("/api/object/:id", jsonParser, async (request, response) => {
 });
 
 app.get("/api/user/:id", jsonParser, async (request, response) => {
-    let id = new ObjectID(request.params.id);
+    let id = new mongoose.Types.ObjectId(request.params.id);
     let userFilter = {password: false}
     let user = await UserInfo.findById(id, userFilter);
     let fields = {
@@ -178,6 +178,10 @@ app.get("/api/user/:id", jsonParser, async (request, response) => {
         pictures: {$slice: 1}
     }
     let userObjects = await ObjectInfo.find({owner_id: id}, fields);
+
+    let userObjectsFac = await ObjectInfo.find({factial_user: id},fields);
+    console.log(userObjectsFac)
+    userObjects = [...userObjects, ...userObjectsFac]
     if(!user) response.status(404)
     else response.status(200).send({user: user, objects: userObjects});
 });
@@ -211,6 +215,7 @@ app.put("/api/editobj/:id", jsonParser, async (request, response) => {
 
     if(owner_id) {let owner_id_obj = new mongoose.Types.ObjectId(owner_id); update.owner_id = owner_id_obj;}
     if(factial_user) {let f_u = factial_user.map(elem => new mongoose.Types.ObjectId(elem)); update.factial_user = f_u;}
+    update.lastdate = new Date(Date.now())
 
     let obj = await ObjectInfo.findOneAndUpdate({_id: id}, update, {new: true});
     if(!obj) response.status(404);
@@ -223,6 +228,8 @@ app.get("/api/findUser", jsonParser, async (request, response) => {
     if(users) response.send(users);
     else response.status(404);
 });
+
+
 
 main();
 
