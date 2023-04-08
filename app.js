@@ -90,16 +90,16 @@ app.post("/api/user/login", jsonParser, async (request, response) => {
 app.post("/api/page", jsonParser, async (request, response) => {
     let { page, sort, sortDirection, status, field, district, type, maxArea, minArea} = request.body;
     page = !page ? 0 : page;
-    const count_objs = 2;
+    const count_objs = 20;
 
-    let filter = {}
-    let sorter = {}
+    let filter = {};
+    let sorter = {};
 
     if(type) filter.type = type; if(district) filter.district = district;
     if(field) filter.field = field; if(status) filter.status = status;
     if(maxArea||minArea)
-        filter.$and = []
-    if(maxArea) filter.$and.push({area: {$lte: maxArea}}); if(minArea) filter.$and.push({area: {$gte: minArea}}) 
+        filter.$and = [];
+    if(maxArea) filter.$and.push({area: {$lte: maxArea}}); if(minArea) filter.$and.push({area: {$gte: minArea}});
 
     let fields = {
         address: true,
@@ -113,19 +113,19 @@ app.post("/api/page", jsonParser, async (request, response) => {
     let objs = {}
 
     if (sort && (sortDirection!==undefined)){
-        sorter[`${sort}`] = sortDirection
+        sorter[`${sort}`] = sortDirection;
         objs = await ObjectInfo.find(filter, fields).sort(sorter).skip(page*count_objs).limit(count_objs);
     }
     else 
         objs = await ObjectInfo.find(filter, fields).skip(page*count_objs).limit(count_objs); 
 
-    let countPage = objs.length/count_objs + 1
+    let countPage = objs.length/count_objs + 1;
 
     response.send({objects: objs, pages: countPage});
 });
 
 app.get("/api/filter", jsonParser, async (request, response) => {
-    let obj = await ObjectInfo.find()
+    let obj = await ObjectInfo.find();
 
 
     let filters = {
@@ -137,31 +137,38 @@ app.get("/api/filter", jsonParser, async (request, response) => {
         minArea: Math.min(...new Set(obj.map(item => item.area)))
     }
 
-    response.send(filters)
+    response.send(filters);
     
 });
 
 app.get("/api/object/:id", jsonParser, async (request, response) => {
     try {
-        let id = new ObjectID(request.params.id)
+        let id = new ObjectID(request.params.id);
         let obj = await ObjectInfo.find({_id: id});
         response.status(200).send(obj);
     }
     catch(err){
-        console.log(err)
-        response.status(404).send("not found")
+        console.log(err);
+        response.status(404).send("not found");
     }
 });
 
 app.post("/api/newobject", jsonParser, async (request, response) => {
-    response.send(request.body.objinf)
+
+    /*let obj = new UserInfo(request.body.objinf)
+    obj.save((err)=>{
+        if (err) response.status(404); 
+    })
+    
+    response.send(request.body.objinf);
+    */
+
 });
 
 
 main();
 
 process.on("SIGINT", async() => {
-      
     await mongoose.disconnect();
     console.log("Приложение завершило работу");
     process.exit();
