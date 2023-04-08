@@ -105,7 +105,8 @@ app.post("/api/page", jsonParser, async (request, response) => {
         status: true,
         type: true,
         area: true,
-        field: true
+        field: true,
+        pictures: {$slice: 1}
     }
 
     let objs = {}
@@ -148,6 +149,8 @@ app.get("/api/object/:id", jsonParser, async (request, response) => {
         response.status(404).send("not found")
     }
 });
+
+
 
 main();
 
