@@ -144,13 +144,18 @@ app.get("/api/filter", jsonParser, async (request, response) => {
 
 app.get("/api/object/:id", jsonParser, async (request, response) => {
     try {
+        fields2 = {
+            owner_id: false,
+            factial_user: false
+        }
         let id = new ObjectID(request.params.id);
-        let obj = await ObjectInfo.findOne({_id: id});
+        let obj = await ObjectInfo.findOne({_id: id}, fields2);
         fields = {
             name: true,
             picture: true,
             _id: true
         }
+       
         let user = await UserInfo.findOne({_id: obj.owner_id}, fields);
         let fact_use = await UserInfo.find({_id: obj.factial_user}, fields);
         response.status(200).send({object: obj, owner: user, fact_us: fact_use});
@@ -210,6 +215,14 @@ app.put("/api/editobj/:id", jsonParser, async (request, response) => {
     let obj = await ObjectInfo.findOneAndUpdate({_id: id}, update, {new: true})
     if(!obj) response.status(404)
     else response.send(obj)
+});
+
+app.get("/api/findUser", jsonParser, async (request, response) => {
+    let req = `(?i)${request.body.name}(?-i)`;
+    console.log(req)
+    let filter = {name: {$regex: req}};
+    let users = await UserInfo.find().regex("name", req)
+    response.send(users)
 });
 
 main();
