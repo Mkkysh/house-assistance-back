@@ -15,7 +15,17 @@ const jsonParser = express.json();
 const PORT = 3000;
 const app = express();
 
+const userInfo = new Schema({
+	"picture": String,
+	"contacts": Array,
+	"email": String,
+	"desc": String,
+	"name": String,
+	"id_pr": Array,
+	"password": String
+}, {collection: "userInfo"})
 
+const UserInfo =  mongoose.model("userInfo", userInfo);
 
 const objectInfoScheme = new Schema({
     "lastdate": Date,
@@ -26,7 +36,7 @@ const objectInfoScheme = new Schema({
 	"address": String,
 	"type": String,
 	"area": Number,
-	"owner_id": String,
+	"owner_id": Schema.ObjectId,
 	"factial_user": Array,
 	"pictures": Array,
 	"documents": Array,
@@ -45,24 +55,9 @@ const objectInfoScheme = new Schema({
 	// }
 }, {collection: "objectInfo"});
 
-const userInfo = new Schema({
-    "id": Number,
-	"picture": String,
-	"contacts": Array,
-	"email": String,
-	"desc": String,
-	"name": String,
-	"id_pr": Array,
-	"password": String
-}, {collection: "userInfo"})
 
-const testScheme = new Schema({
-    "test": String
-}, {collection: "test"})
-
-const test = mongoose.model("test", testScheme);
 const ObjectInfo = mongoose.model("objectInfo", objectInfoScheme);
-const UserInfo =  mongoose.model("userInfo", userInfo);
+
 
 async function main() {
  
@@ -160,17 +155,23 @@ app.get("/api/object/:id", jsonParser, async (request, response) => {
 });
 
 app.post("/api/newobject", jsonParser, async (request, response) => {
-    
-    let users = []
 
+    let owner_id = request.body.objinf.owner_id;
+    let factial_user = request.body.objinf.factial_user
 
-    
+    let owner = await UserInfo.findById(request.body.objinf.owner_id)
+    if(!owner) response.status(404)
+
+    let factial_users = await UserInfo.find({_id: request.body.objinf.factial_user});
+    if(!factial_users) response.status(404)
+
+    console.log(new ObjectID(owner_id))
+
+    let obj = new mongoose.Types.ObjectId(owner_id)
     await ObjectInfo.collection.insertOne({...request.body.objinf, firstdate: new Date(Date.now()), 
-                                        lastdate:new Date(Date.now())});
+        lastdate:new Date(Date.now()), owner_id: obj});
     
-
-    
-    response.send(request.body.objinf);
+    response.send("hi");
     
 });
 
