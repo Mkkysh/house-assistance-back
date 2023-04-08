@@ -21,7 +21,7 @@ const objectInfoScheme = new Schema({
 	"district": String,
 	"address": String,
 	"type": String,
-	"space": Number,
+	"area": Number,
 	"owner_id": String,
 	"factial_user": String,
 	"pictures": Array,
@@ -90,25 +90,73 @@ app.post("/api/index/page", jsonParser, async (request, response) => {
     page = !page ? 0 : page;
 
     let filter = {}
+    let sorter = {}
 
     if(type) filter.type = type; if(district) filter.district = district;
     if(field) filter.field = field; if(status) filter.status = status;
     if(maxArea||minArea)
         filter.$and = []
-    if(maxArea) filter.$and.push({space: {$lte: maxArea}}); if(minArea) filter.$and.push({space: {$gte: minArea}}) 
-
-    console.log(filter);
-
+    if(maxArea) filter.$and.push({area: {$lte: maxArea}}); if(minArea) filter.$and.push({area: {$gte: minArea}}) 
 
     let objs = {}
-    if (sort && sortDirection)
-        objs = await ObjectInfo.find(filter).sort({sort: sortDirection})
-    else 
-        objs = await ObjectInfo.find(filter); 
 
-    
+    if (sort && (sortDirection!==undefined)){
+        sorter[`${sort}`] = sortDirection
+        objs = await ObjectInfo.find(filter).sort(sorter).skip(page*2).limit(2);
+    }
+    else 
+        objs = await ObjectInfo.find(filter).skip(page*2).limit(2); 
 
     response.send(objs);
 });
 
+app.post("/api/page", jsonParser, async (request, response) => {
+    let { page, sort, sortDirection, status, field, district, type, maxArea, minArea} = request.body;
+    page = !page ? 0 : page;
+
+    let filter = {}
+    let sorter = {}
+
+    if(type) filter.type = type; if(district) filter.district = district;
+    if(field) filter.field = field; if(status) filter.status = status;
+    if(maxArea||minArea)
+        filter.$and = []
+    if(maxArea) filter.$and.push({area: {$lte: maxArea}}); if(minArea) filter.$and.push({area: {$gte: minArea}}) 
+
+    let objs = {}
+
+    if (sort && (sortDirection!==undefined)){
+        sorter[`${sort}`] = sortDirection
+        objs = await ObjectInfo.find(filter).sort(sorter).skip(page*2).limit(2);
+    }
+    else 
+        objs = await ObjectInfo.find(filter).skip(page*2).limit(2); 
+
+    response.send(objs);
+});
+
+app.get("/api/filter", jsonParser, async (request, response) => {
+    let obj = await ObjectInfo.find()
+
+
+    let filters = {
+        type: [...new Set(obj.map(item => item.type))],
+        status: [...new Set(obj.map(item => item.status))],
+        district: [...new Set(obj.map(item => item.district))],
+        field: [...new Set(obj.map(item => item.field))],
+        maxArea: Math.max(...new Set(obj.map(item => item.area))),
+        minArea: Math.min(...new Set(obj.map(item => item.area)))
+    }
+
+    response.send(filters)
+    
+});
+
 main();
+
+process.on("SIGINT", async() => {
+      
+    await mongoose.disconnect();
+    console.log("Приложение завершило работу");
+    process.exit();
+});
