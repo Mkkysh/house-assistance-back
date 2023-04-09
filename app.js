@@ -79,9 +79,11 @@ const objectInfoScheme = new Schema({
 
 const meetingsScheme = new Schema({
     "name": String,
-    "object_id": Array,
-    "usres_id": Array,
-    "Date": Date
+    "objects_id": Array,
+    "users_id": Array,
+    "Date": Date,
+    "status": String,
+    "result": String
 }, {collection: "meetings"});
 
 const ObjectInfo = mongoose.model("objectInfo", objectInfoScheme);
@@ -171,7 +173,9 @@ app.post("/api/page", jsonParser, async (request, response) => {
     else 
         objs = await ObjectInfo.find(filter, fields).skip(page*count_objs).limit(count_objs); 
 
-    let countPage = Math.ceil(objs.length/count_objs);
+    let count = await ObjectInfo.find(filter)
+
+    let countPage = Math.ceil(count/count_objs);
 
     response.send({objects: objs, pages: countPage});
 });
@@ -242,8 +246,7 @@ app.get("/api/user/:id", jsonParser, async (request, response) => {
 
 app.post("/api/newobject", upload.fields([{name: "pics", maxCount: 50}, {name: "files", maxCount: 50}, {name: "imagesStage", maxCount: 50}, {name: "filesStage", maxCount: 50}]), async (request, response) => {
 
-
-    let imageInfo = JSON.parse(request.body.imagesInfo)    
+    try{let imageInfo = JSON.parse(request.body.imagesInfo)    
     var object = JSON.parse(request.body.card);
    
     let owner_name = object.fact_us[0].name;
@@ -274,8 +277,6 @@ app.post("/api/newobject", upload.fields([{name: "pics", maxCount: 50}, {name: "
     });
 
 
-    console.log(request.files)
-
     let stagefiles = imageInfo.stagesFiles;
     let filesStage = request.files.filesStage
 
@@ -293,10 +294,14 @@ app.post("/api/newobject", upload.fields([{name: "pics", maxCount: 50}, {name: "
         object.stages[j].documents = doc;
     }
 
-    let objectIn = {...object, _id: undefined, documents: files, pictures: pictures, owner_id: owner, factial_user: factial_user, owner: undefined, fact_us: undefined};
+    let objectIn = {...object, _id: undefined, documents: files, pictures: pictures, owner_id: owner, 
+                    factial_user: factial_user, owner: undefined, fact_us: undefined};
     delete objectIn._id; delete objectIn.fact_us; delete objectIn.owner;
 
     await ObjectInfo.collection.insertOne(objectIn);
+    response.status(200);}
+    catch(err){ response.status(404)}
+
 
 });
 
@@ -338,13 +343,14 @@ app.post("/api/addMeetinig", jsonParser, async (request, response) => {
     let objects_id = request.body.objects_id; 
     let users_id = request.body.users_id;
     let objects = await ObjectInfo.find({_id: objects_id},{_id: true, factial_user: true});
+    console.log(objects)
     if(objects) {
             let users = [];
             objects.forEach(elem => (users.push(...elem.factial_user)));
 
             users.push(...users_id);
-            users.map(elem => new mongoose.Types.ObjectId(elem));
-            objects_id.map(elem => new mongoose.Types.ObjectId(elem)) 
+            users = users.map(elem => new mongoose.Types.ObjectId(elem));
+            objects_id = objects_id.map(elem => new mongoose.Types.ObjectId(elem)) 
 
             await Meetings.collection.insertOne({...request.body, users_id: users, objects_id: objects_id})
 
@@ -353,23 +359,16 @@ app.post("/api/addMeetinig", jsonParser, async (request, response) => {
     else response.status(404);
 });
 
-// app.get("/api/getMeetinig", jsonParser, async (request, response) => {
-//     let objects_id = request.body.objects_id; 
-//     let users_id = request.body.users_id;
-//     let objects = await ObjectInfo.find({_id: objects_id},{_id: true, factial_user: true});
-//     if(objects) {
-//             let users = [];
-//             objects.forEach(elem => (users.push(...elem.factial_user)));
+// app.get("/api/getMeetinigs/:id", jsonParser, async (request, response) => {
 
-//             users.push(...users_id);
-//             users.map(elem => new mongoose.Types.ObjectId(elem));
-//             objects_id.map(elem => new mongoose.Types.ObjectId(elem)) 
+//     const pageCount = 2
 
-//             await Meetings.collection.insertOne({...request.body, users_id: users, objects_id: objects_id})
+//     let id = new mongoose.Types.ObjectId(request.params.id);
+//     let meetings = await Meetings.find({users_id: id});
 
-//             response.send(users);
-//         }
-//     else response.status(404);
+//     meetings = meetings.map()
+
+
 // });
 
 main();
