@@ -438,7 +438,7 @@ app.post("/api/findUser", verfyToken, jsonParser, async (request, response) => {
 });
 
 app.post(
-  "/api/addMeetinig",
+  "/api/addMeeting",
   verfyToken,
   jsonParser,
   async (request, response) => {
