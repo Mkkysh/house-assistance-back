@@ -242,6 +242,7 @@ app.get("/api/user/:id", jsonParser, async (request, response) => {
 
 app.post("/api/newobject", upload.fields([{name: "pics", maxCount: 50}, {name: "files", maxCount: 50}, {name: "imagesStage", maxCount: 50}, {name: "filesStage", maxCount: 50}]), async (request, response) => {
 
+
     let imageInfo = JSON.parse(request.body.imagesInfo)    
     var object = JSON.parse(request.body.card);
    
@@ -268,7 +269,12 @@ app.post("/api/newobject", upload.fields([{name: "pics", maxCount: 50}, {name: "
         object.stages[j].photos = photos;
     }
 
-    let files = request.files.files; files = files.map(el => el.filename);
+    let files = request.files.files; files = files.map((el) => {
+        return {path: el.filename, exts: el.filename.substring(el.filename.indexOf(".")+1), name: el.filename.substring(0,el.filename.indexOf("."))}
+    });
+
+
+    console.log(request.files)
 
     let stagefiles = imageInfo.stagesFiles;
     let filesStage = request.files.filesStage
@@ -280,7 +286,9 @@ app.post("/api/newobject", upload.fields([{name: "pics", maxCount: 50}, {name: "
         indexFile += stagefiles[j];
         let doc = [];
         for(let i=offsetFile; i<indexFile;i++){
-            doc.push(filesStage[i].filename);
+            doc.push({path: filesStage[i].filename, exts: filesStage[i]
+                .filename.substring(filesStage[i].filename.indexOf(".")+1), name: filesStage[i]
+                .filename.substring(0, filesStage[i].filename.indexOf("."))});
         }
         object.stages[j].documents = doc;
     }
@@ -344,6 +352,25 @@ app.post("/api/addMeetinig", jsonParser, async (request, response) => {
         }
     else response.status(404);
 });
+
+// app.get("/api/getMeetinig", jsonParser, async (request, response) => {
+//     let objects_id = request.body.objects_id; 
+//     let users_id = request.body.users_id;
+//     let objects = await ObjectInfo.find({_id: objects_id},{_id: true, factial_user: true});
+//     if(objects) {
+//             let users = [];
+//             objects.forEach(elem => (users.push(...elem.factial_user)));
+
+//             users.push(...users_id);
+//             users.map(elem => new mongoose.Types.ObjectId(elem));
+//             objects_id.map(elem => new mongoose.Types.ObjectId(elem)) 
+
+//             await Meetings.collection.insertOne({...request.body, users_id: users, objects_id: objects_id})
+
+//             response.send(users);
+//         }
+//     else response.status(404);
+// });
 
 main();
 
