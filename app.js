@@ -470,7 +470,7 @@ app.post("/api/getMeetings", verfyToken, jsonParser, async (request, response) =
 
   const pageCount = 2
 
-  let id = request.locals.id;
+  let id = response.locals.id;
   let meetings = await Meetings.find({users_id: id}).skip(page*pageCount).limit(pageCount);;
 
   for(i in meetings){
