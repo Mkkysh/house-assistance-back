@@ -437,7 +437,7 @@ app.post("/api/findUser", verfyToken, jsonParser, async (request, response) => {
   else response.status(404);
 });
 
-app.post("/api/addMeetinig",verfyToken, jsonParser, async (request, response) => {
+app.post("/api/addMeeting",verfyToken, jsonParser, async (request, response) => {
   let objects_ = request.body.objects; 
   let users_id = request.body.users;
   let objects = await ObjectInfo.find({address: objects_},{_id: true, factial_user: true});
@@ -460,7 +460,7 @@ app.post("/api/addMeetinig",verfyToken, jsonParser, async (request, response) =>
   else response.status(404);
 });
 
-app.post("/api/getMeetinigs/:id", verfyToken, jsonParser, async (request, response) => {
+app.post("/api/getMeetings/:id", verfyToken, jsonParser, async (request, response) => {
 
   let page = request.body.page
   page = !page ? 0 : page;
@@ -487,7 +487,7 @@ app.post("/api/getMeetinigs/:id", verfyToken, jsonParser, async (request, respon
 });
 
 app.post(
-  "/api/getMeetinigs/:id",
+  "/api/getMeetings/:id",
   verfyToken,
   jsonParser,
   async (request, response) => {
