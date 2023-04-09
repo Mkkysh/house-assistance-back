@@ -8,12 +8,33 @@ const { ObjectID } = require("bson");
 const { object } = require("webidl-conversions");
 const Schema = mongoose.Schema;
 const MongoClient = require("mongodb").MongoClient;
+const multer = require("multer");
+const { Console } = require("console");
 
 const parser = new XMLParser();
 const jsonParser = express.json();
 
 const PORT = 3000;
 const app = express();
+
+const storage = multer.diskStorage({
+    destination: function (req, file, cb) {
+      cb(null, "uploads/");
+    },
+    filename: function (req, file, cb) {
+        file.originalname = Buffer.from(file.originalname, 'latin1').toString('utf8')
+        const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+        cb(
+            null,
+            file.originalname.split(".")[0] +
+            uniqueSuffix +
+            "." +
+            file.originalname.split(".")[1]
+    );
+    },
+  });
+
+const upload = multer({ storage: storage });
 
 const userInfo = new Schema({
 	"picture": String,
@@ -174,12 +195,12 @@ app.get("/api/filter", jsonParser, async (request, response) => {
 
 app.get("/api/object/:id", jsonParser, async (request, response) => {
     try {
-        fields2 = {
-            owner_id: false,
-            factial_user: false
-        }
+        // fields2 = {
+        //     owner_id: false,
+        //     factial_user: false
+        // }
         let id = new ObjectID(request.params.id);
-        let obj = await ObjectInfo.findOne({_id: id}, fields2);
+        let obj = await ObjectInfo.findOne({_id: id});
         fields = {
             name: true,
             picture: true,
@@ -188,9 +209,12 @@ app.get("/api/object/:id", jsonParser, async (request, response) => {
        
         let user = await UserInfo.findOne({_id: obj.owner_id}, fields);
         let fact_use = await UserInfo.find({_id: obj.factial_user}, fields);
+        obj.owner_id = ''
+        obj.factial_user = []
         response.status(200).send({object: obj, owner: user, fact_us: fact_use});
     }
     catch(err){
+        console.log(err);
         response.status(404).send("not found");
     }
 });
@@ -216,24 +240,56 @@ app.get("/api/user/:id", jsonParser, async (request, response) => {
     else response.status(200).send({user: user, objects: userObjects});
 });
 
-app.post("/api/newobject", jsonParser, async (request, response) => {
+app.post("/api/newobject", upload.fields([{name: "pics", maxCount: 50}, {name: "files", maxCount: 50}, {name: "imagesStage", maxCount: 50}, {name: "filesStage", maxCount: 50}]), async (request, response) => {
 
-    let owner_id = request.body.objinf.owner_id;
-    let factial_user = request.body.objinf.factial_user
-
-    let owner = await UserInfo.findById(request.body.objinf.owner_id)
-    if(!owner) response.status(404)
-
-    let factial_users = await UserInfo.find({_id: request.body.objinf.factial_user});
-    if(!factial_users) response.status(404)
-
-    console.log(new ObjectID(owner_id))
-
-    let obj = new mongoose.Types.ObjectId(owner_id)
-    let f_u = factial_user.map(elem => new mongoose.Types.ObjectId(elem))
-    await ObjectInfo.collection.insertOne({...request.body.objinf, firstdate: new Date(Date.now()), 
-        lastdate:new Date(Date.now()), owner_id: obj, factial_user: f_u});
+    let imageInfo = JSON.parse(request.body.imagesInfo)    
+    var object = JSON.parse(request.body.card);
+   
+    let owner_name = object.fact_us[0].name;
+    let factial_user_name = object.fact_us; 
+    factial_user_name = factial_user_name.map(el => el.name);
     
+    let owner = await UserInfo.findOne({name: owner_name}, {_id: true});
+    let factial_user = await UserInfo.find({name: factial_user_name}); factial_user=factial_user.map(el => el._id)
+    let pictures = request.files.pics; pictures = pictures.map(el => el.filename);
+
+    let stageInf = imageInfo.stagesImages;
+    let imagesStage = request.files.imagesStage
+
+    let index = 0;
+    let offset = 0;
+    for(let j=0; j < stageInf.length;j++){
+        offset = index;
+        index += stageInf[j];
+        let photos = [];
+        for(let i=offset; i<index;i++){
+            photos.push(imagesStage[i].filename);
+        }
+        object.stages[j].photos = photos;
+    }
+
+    let files = request.files.files; files = files.map(el => el.filename);
+
+    let stagefiles = imageInfo.stagesFiles;
+    let filesStage = request.files.filesStage
+
+    let indexFile = 0;
+    let offsetFile = 0;
+    for(let j=0; j < stagefiles.length;j++){
+        offsetFile = indexFile;
+        indexFile += stagefiles[j];
+        let doc = [];
+        for(let i=offsetFile; i<indexFile;i++){
+            doc.push(filesStage[i].filename);
+        }
+        object.stages[j].documents = doc;
+    }
+
+    let objectIn = {...object, _id: undefined, documents: files, pictures: pictures, owner_id: owner, factial_user: factial_user, owner: undefined, fact_us: undefined};
+    delete objectIn._id; delete objectIn.fact_us; delete objectIn.owner;
+
+    await ObjectInfo.collection.insertOne(objectIn);
+
 });
 
 app.put("/api/editobj/:id", jsonParser, async (request, response) => {
