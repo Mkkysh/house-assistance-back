@@ -56,7 +56,16 @@ const objectInfoScheme = new Schema({
 }, {collection: "objectInfo"});
 
 
+const meetingsScheme = new Schema({
+    "name": String,
+    "object_id": Array,
+    "usres_id": Array,
+    "Date": Date
+}, {collection: "meetings"});
+
 const ObjectInfo = mongoose.model("objectInfo", objectInfoScheme);
+
+const Meetings = mongoose.model("meetings", meetingsScheme);
 
 
 async function main() {
@@ -258,6 +267,25 @@ app.post("/api/findObject", jsonParser, async (request, response) => {
     var obj2 = await ObjectInfo.find().regex("field", req)
 
     if(obj1||obj2) response.send([...obj1, ...obj2]);
+    else response.status(404);
+});
+
+app.post("/api/addMeetinig", jsonParser, async (request, response) => {
+    let objects_id = request.body.objects_id; 
+    let users_id = request.body.users_id;
+    let objects = await ObjectInfo.find({_id: objects_id},{_id: true, factial_user: true});
+    if(objects) {
+            let users = [];
+            objects.forEach(elem => (users.push(...elem.factial_user)));
+
+            users.push(...users_id);
+            users.map(elem => new mongoose.Types.ObjectId(elem));
+            objects_id.map(elem => new mongoose.Types.ObjectId(elem)) 
+
+            await Meetings.collection.insertOne({...request.body, users_id: users, objects_id: objects_id})
+
+            response.send(users);
+        }
     else response.status(404);
 });
 
