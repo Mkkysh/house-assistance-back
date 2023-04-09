@@ -222,14 +222,23 @@ app.put("/api/editobj/:id", jsonParser, async (request, response) => {
     else response.send(obj);
 });
 
-app.get("/api/findUser", jsonParser, async (request, response) => {
+app.post("/api/findUser", jsonParser, async (request, response) => {
     let req = `(?i)${request.body.name}(?-i)`;
     let users = await UserInfo.find().regex("name", req);
     if(users) response.send(users);
     else response.status(404);
 });
 
+app.post("/api/findObject", jsonParser, async (request, response) => {
+    let req = request.body.text;
+    let text = req.split(" ").map(el => `(?i)${el}(?-i)`)
 
+    var obj1 = await ObjectInfo.find().regex("district", req)
+    var obj2 = await ObjectInfo.find().regex("field", req)
+
+    if(obj1||obj2) response.send([...obj1, ...obj2]);
+    else response.status(404);
+});
 
 main();
 
