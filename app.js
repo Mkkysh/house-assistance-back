@@ -323,19 +323,25 @@ app.post(
       factial_user_name = factial_user_name.map((el) => el.name);
 
       let owner = await UserInfo.findOne({ name: owner_name }, { _id: true });
-      // if(!owner){
-      //   await UserInfo.collection.insertOne({
-      //     name: owner_name,
-      //     desc: "",
-      //     email: "",
-      //     picture: "",
-      //     password: "",
-      //     contacts: [],
-      //   })
-      // }
+
+
+      if(!owner){
+        await UserInfo.collection.insertOne({
+          name: owner_name,
+          desc: "",
+          email: "",
+          picture: "",
+          password: "",
+          contacts: [],
+          id_pr:""
+        })
+      }
+
+
 
       let factial_user = await UserInfo.find({ name: factial_user_name });
       factial_user = factial_user.map((el) => el._id);
+
 
       let pictures = request.files.pics;
       pictures = pictures.map((el) => el.filename);
@@ -475,7 +481,7 @@ app.post("/api/getMeetings", verfyToken, jsonParser, async (request, response) =
   let page = request.body.page
   page = !page ? 0 : page;
 
-  const pageCount = 2
+  const pageCount = 20
 
   let id = response.locals.id;
   let meetings = await Meetings.find({users_id: id}).skip(page*pageCount).limit(pageCount);
