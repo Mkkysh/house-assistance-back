@@ -324,7 +324,7 @@ app.put("/api/editobj/:id", jsonParser, async (request, response) => {
 app.post("/api/findUser", jsonParser, async (request, response) => {
     let req = `(?i)${request.body.name}(?-i)`;
     let users = await UserInfo.find().regex("name", req);
-    if(users) response.send(users.name);
+    if(users) response.send(users.map(el => el.name));
     else response.status(404);
 });
 
@@ -366,8 +366,11 @@ app.get("/api/getMeetinigs/:id", jsonParser, async (request, response) => {
     let id = new mongoose.Types.ObjectId(request.params.id);
     let meetings = await Meetings.find({users_id: id});
 
-    meetings = meetings.map()
-
+    for(i in meetings){
+        let objs = await ObjectInfo.find({_id: i.objects_id})
+        console.log(objs)
+    }
+    
 
 });
 
