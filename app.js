@@ -327,7 +327,7 @@ app.put("/api/editobj/:id", verfyToken, jsonParser, async (request, response) =>
 app.post("/api/findUser", verfyToken, jsonParser, async (request, response) => {
     let req = `(?i)${request.body.name}(?-i)`;
     let users = await UserInfo.find().regex("name", req);
-    if(users) response.send(users.map(el => el.name));
+    if(users) response.send(users.map(el => el.name).slice(0,7));
     else response.status(404);
 });
 
@@ -345,7 +345,7 @@ app.post("/api/addMeetinig", verfyToken, jsonParser, async (request, response) =
             users = users.map(elem => new mongoose.Types.ObjectId(elem));
             objects_id = objects_id.map(elem => new mongoose.Types.ObjectId(elem)) 
 
-            await Meetings.collection.insertOne({...request.body, users_id: users, objects_id: objects_id})
+            await Meetings.collection.insertOne({...request.body, users_id: users, objects_id: objects_id, result: ""})
 
             response.send(users);
         }
@@ -406,7 +406,7 @@ app.post("/api/findFields", verfyToken, jsonParser, async (request, response) =>
     let req = `(?i)${request.body.text}(?-i)`;
     
     fields = await ObjectInfo.find({}, {field: true}).regex("field", req);
-    un_fields = {field: [...new Set(fields.map(item => item.field))]}
+    un_fields = [...new Set(fields.map(item => item.field))].slice(0,7);
 
     response.send(un_fields);
 
@@ -425,7 +425,7 @@ app.post("/api/findDistrict", verfyToken, jsonParser, async (request, response) 
     let req = `(?i)${request.body.text}(?-i)`;
     
     district = await ObjectInfo.find({}, {district: true}).regex("district", req);
-    un_district = {district: [...new Set(district.map(item => item.district))]}
+    un_district = [...new Set(district.map(item => item.district))].slice(0,7)
 
     response.send(un_district);
 
