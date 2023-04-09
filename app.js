@@ -177,7 +177,7 @@ app.post("/api/page", jsonParser, async (request, response) => {
     else 
         objs = await ObjectInfo.find(filter, fields).skip(page*count_objs).limit(count_objs); 
 
-    let count = await ObjectInfo.find(filter)
+    let count = await ObjectInfo.count(filter)
 
     let countPage = Math.ceil(count/count_objs);
 
