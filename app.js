@@ -337,8 +337,6 @@ app.post(
         })
       }
 
-
-
       let factial_user = await UserInfo.find({ name: factial_user_name });
       factial_user = factial_user.map((el) => el._id);
 
@@ -443,6 +441,17 @@ app.put(
     });
     if (!obj) response.status(404);
     else response.send(obj);
+  }
+);
+
+app.put("/api/setRes/:id", jsonParser, async (request, response) => {
+    
+    let id = request.params.id
+    let res = request.body.res;
+    await Meetings.updateOne({ _id: id }, {result: res}, {new: true});
+
+    response.status(200);
+
   }
 );
 
