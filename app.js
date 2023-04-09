@@ -262,7 +262,7 @@ app.get("/api/user/:id", verfyToken, jsonParser, async (request, response) => {
     else response.status(200).send({user: user, objects: userObjects});
 });
 
-app.post("/api/newobject", verfyToken, upload.fields([{name: "pics", maxCount: 50}, {name: "files", maxCount: 50}, {name: "imagesStage", maxCount: 50}, {name: "filesStage", maxCount: 50}]), async (request, response) => {
+app.post("/api/newobject", upload.fields([{name: "pics", maxCount: 50}, {name: "files", maxCount: 50}, {name: "imagesStage", maxCount: 50}, {name: "filesStage", maxCount: 50}]), async (request, response) => {
 
     try {let imageInfo = JSON.parse(request.body.imagesInfo)    
     var object = JSON.parse(request.body.card);
@@ -272,8 +272,33 @@ app.post("/api/newobject", verfyToken, upload.fields([{name: "pics", maxCount: 5
     factial_user_name = factial_user_name.map(el => el.name);
     
     let owner = await UserInfo.findOne({name: owner_name}, {_id: true});
+    if(!owner){
+        await UserInfo.collection.insertOne({
+            name: owner_name,
+            desc: "",
+            password: "",
+            email: "",
+            picture: "",
+            id_pr: "",
+            contacts: []
+        });
+    }
 
     let factial_user = await UserInfo.find({name: factial_user_name}); factial_user=factial_user.map(el => el._id);
+
+    if(!factial_user){
+        factial_user_name.forEach(async el => {
+            await UserInfo.collection.insertOne({
+                name: el.name,
+                desc: "",
+                password: "",
+                email: "",
+                picture: "",
+                id_pr: "",
+                contacts: []
+            });
+        })
+    }
 
     let pictures = request.files.pics; pictures = pictures.map(el => el.filename);
 
@@ -350,20 +375,23 @@ app.post("/api/findUser", verfyToken, jsonParser, async (request, response) => {
 });
 
 
-app.post("/api/addMeetinig", verfyToken, jsonParser, async (request, response) => {
-    let objects_id = request.body.objects_id; 
-    let users_id = request.body.users_id;
-    let objects = await ObjectInfo.find({_id: objects_id},{_id: true, factial_user: true});
+app.post("/api/addMeetinig",verfyToken, jsonParser, async (request, response) => {
+    let objects_ = request.body.objects; 
+    let users_id = request.body.users;
+    let objects = await ObjectInfo.find({address: objects_},{_id: true, factial_user: true});
     console.log(objects)
     if(objects) {
             let users = [];
+
             objects.forEach(elem => (users.push(...elem.factial_user)));
+            let users_req = await UserInfo.find({name: users_id}, {_id:true});
 
-            users.push(...users_id);
-            users = users.map(elem => new mongoose.Types.ObjectId(elem));
-            objects_id = objects_id.map(elem => new mongoose.Types.ObjectId(elem)) 
+            users_req = users_req.map(elem => {return elem._id})
+            users.push(...users_req);
 
-            await Meetings.collection.insertOne({...request.body, users_id: users, objects_id: objects_id, result: ""})
+            let objectsP = objects.map(elem => {return elem._id});
+
+            await Meetings.collection.insertOne({...request.body, users_id: users, objects_id: objectsP, result: ""});
 
             response.send(users);
         }
