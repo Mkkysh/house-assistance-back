@@ -411,6 +411,29 @@ app.post("/api/getMeetinigs/:id", verfyToken, jsonParser, async (request, respon
     }
   }
 
+app.post("/api/findFields", verfyToken, jsonParser, async (request, response) => {
+
+    let req = `(?i)${request.body.text}(?-i)`;
+    
+    fields = await ObjectInfo.find({}, {field: true}).regex("field", req);
+    un_fields = {field: [...new Set(fields.map(item => item.field))]}
+
+    response.send(un_fields);
+
+});
+
+
+app.post("/api/findDistrict", verfyToken, jsonParser, async (request, response) => {
+
+    let req = `(?i)${request.body.text}(?-i)`;
+    
+    district = await ObjectInfo.find({}, {district: true}).regex("district", req);
+    un_district = {district: [...new Set(district.map(item => item.district))]}
+
+    response.send(un_district);
+
+});
+
 main();
 
 app.get("/api/public/download/*", (req, res, next) => {
