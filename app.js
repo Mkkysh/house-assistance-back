@@ -324,7 +324,7 @@ app.put("/api/editobj/:id", jsonParser, async (request, response) => {
 app.post("/api/findUser", jsonParser, async (request, response) => {
     let req = `(?i)${request.body.name}(?-i)`;
     let users = await UserInfo.find().regex("name", req);
-    if(users) response.send(users);
+    if(users) response.send(users.name);
     else response.status(404);
 });
 
@@ -359,17 +359,17 @@ app.post("/api/addMeetinig", jsonParser, async (request, response) => {
     else response.status(404);
 });
 
-// app.get("/api/getMeetinigs/:id", jsonParser, async (request, response) => {
+app.get("/api/getMeetinigs/:id", jsonParser, async (request, response) => {
 
-//     const pageCount = 2
+    const pageCount = 2
 
-//     let id = new mongoose.Types.ObjectId(request.params.id);
-//     let meetings = await Meetings.find({users_id: id});
+    let id = new mongoose.Types.ObjectId(request.params.id);
+    let meetings = await Meetings.find({users_id: id});
 
-//     meetings = meetings.map()
+    meetings = meetings.map()
 
 
-// });
+});
 
 main();
 
