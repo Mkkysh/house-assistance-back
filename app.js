@@ -294,7 +294,6 @@ app.post("/api/newobject", verfyToken, upload.fields([{name: "pics", maxCount: 5
 
     console.log(request.files)
     
-
     let files = request.files.files; files = files.map((el) => {
         return {path: el.filename, exts: el.filename.substring(el.filename.indexOf(".")+1), name: el.originalname.substring(0,el.originalname.indexOf("."))}
     });
@@ -320,9 +319,9 @@ app.post("/api/newobject", verfyToken, upload.fields([{name: "pics", maxCount: 5
     delete objectIn._id; delete objectIn.fact_us; delete objectIn.owner;
 
     await ObjectInfo.collection.insertOne(objectIn);
-    response.status(200).send("success");}
+    response.status(200).send({key: true});}
     catch(err){
-        response.status(404)
+        response.status(404);
     }
 
 });
