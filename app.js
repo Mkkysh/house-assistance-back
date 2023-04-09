@@ -264,7 +264,7 @@ app.get("/api/user/:id", verfyToken, jsonParser, async (request, response) => {
 
 app.post("/api/newobject", verfyToken, upload.fields([{name: "pics", maxCount: 50}, {name: "files", maxCount: 50}, {name: "imagesStage", maxCount: 50}, {name: "filesStage", maxCount: 50}]), async (request, response) => {
 
-    let imageInfo = JSON.parse(request.body.imagesInfo)    
+    try {let imageInfo = JSON.parse(request.body.imagesInfo)    
     var object = JSON.parse(request.body.card);
    
     let owner_name = object.fact_us[0].name;
@@ -272,7 +272,9 @@ app.post("/api/newobject", verfyToken, upload.fields([{name: "pics", maxCount: 5
     factial_user_name = factial_user_name.map(el => el.name);
     
     let owner = await UserInfo.findOne({name: owner_name}, {_id: true});
-    let factial_user = await UserInfo.find({name: factial_user_name}); factial_user=factial_user.map(el => el._id)
+
+    let factial_user = await UserInfo.find({name: factial_user_name}); factial_user=factial_user.map(el => el._id);
+
     let pictures = request.files.pics; pictures = pictures.map(el => el.filename);
 
     let stageInf = imageInfo.stagesImages;
@@ -291,7 +293,7 @@ app.post("/api/newobject", verfyToken, upload.fields([{name: "pics", maxCount: 5
     }
 
     console.log(request.files)
-    response.status(200);
+    
 
     let files = request.files.files; files = files.map((el) => {
         return {path: el.filename, exts: el.filename.substring(el.filename.indexOf(".")+1), name: el.originalname.substring(0,el.originalname.indexOf("."))}
@@ -319,7 +321,10 @@ app.post("/api/newobject", verfyToken, upload.fields([{name: "pics", maxCount: 5
 
     await ObjectInfo.collection.insertOne(objectIn);
     response.send("success")
-    response.status(200);
+    response.status(200);}
+    catch(err){
+        response.status(404)
+    }
 
 });
 
