@@ -456,7 +456,7 @@ app.post("/api/addMeeting",verfyToken, jsonParser, async (request, response) => 
 
           let objectsP = objects.map(elem => {return elem._id});
 
-          await Meetings.collection.insertOne({...request.body, users_id: users, objects_id: objectsP, result: ""});
+          await Meetings.collection.insertOne({...request.body, users_id: users, objects_id: objectsP, result: "", status: "wait"});
 
           response.send(users);
       }
@@ -471,13 +471,15 @@ app.post("/api/getMeetings", verfyToken, jsonParser, async (request, response) =
   const pageCount = 2
 
   let id = response.locals.id;
-  let meetings = await Meetings.find({users_id: id}).skip(page*pageCount).limit(pageCount);;
+  let meetings = await Meetings.find({users_id: id}).skip(page*pageCount).limit(pageCount);
+
+  console.log(meetings)
 
   for(i in meetings){
       let objects = await ObjectInfo.find({_id: meetings[i].objects_id},
           {address: true, status: true, field:true, district: true, area: true});
       let users = await UserInfo.find({_id: meetings[i].users_id},
-              {name: true});
+              {name: true, picture: true});
       meetings[i] = {...meetings[i], objects: objects, users: users}
   }
 
@@ -485,7 +487,9 @@ app.post("/api/getMeetings", verfyToken, jsonParser, async (request, response) =
   
   let countPage = Math.ceil(meeting/pageCount);
 
-  response.status(200).send({meetings:meetings, pages: countPage})
+
+
+  response.status(200).send({meetings: meetings, pages: countPage})
 
 });
 
