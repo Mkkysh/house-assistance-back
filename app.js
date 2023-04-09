@@ -324,7 +324,14 @@ app.post(
 
       let owner = await UserInfo.findOne({ name: owner_name }, { _id: true });
       // if(!owner){
-      //   await 
+      //   await UserInfo.collection.insertOne({
+      //     name: owner_name,
+      //     desc: "",
+      //     email: "",
+      //     picture: "",
+      //     password: "",
+      //     contacts: [],
+      //   })
       // }
 
       let factial_user = await UserInfo.find({ name: factial_user_name });
@@ -477,7 +484,7 @@ app.post("/api/getMeetings", verfyToken, jsonParser, async (request, response) =
 
   for(i in meetings){
       let objects = await ObjectInfo.find({_id: meetings[i].objects_id},
-          {address: true, status: true, field:true, district: true, area: true});
+          {address: true, status: true, field:true, district: true, area: true, type: true});
       let users = await UserInfo.find({_id: meetings[i].users_id},
               {name: true, picture: true});
       meetings[i] = {...meetings[i], objects: objects, users: users}
