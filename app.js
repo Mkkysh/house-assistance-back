@@ -145,7 +145,7 @@ app.post("/api/user/signup", jsonParser, async (request, response) => {
     }
 });
 
-app.post("/api/page", jsonParser, async (request, response) => {
+app.post("/api/page", verfyToken, jsonParser, async (request, response) => {
     let { page, sort, sortDirection, status, field, district, type, maxArea, minArea} = request.body;
     page = !page ? 0 : page;
     const count_objs = 20;
@@ -184,7 +184,7 @@ app.post("/api/page", jsonParser, async (request, response) => {
     response.send({objects: objs, pages: countPage});
 });
 
-app.get("/api/filter", jsonParser, async (request, response) => {
+app.get("/api/filter", verfyToken,jsonParser, async (request, response) => {
     let obj = await ObjectInfo.find();
 
 
@@ -201,7 +201,7 @@ app.get("/api/filter", jsonParser, async (request, response) => {
     
 });
 
-app.get("/api/object/:id", jsonParser, async (request, response) => {
+app.get("/api/object/:id", verfyToken ,jsonParser, async (request, response) => {
     try {
         // fields2 = {
         //     owner_id: false,
@@ -227,7 +227,7 @@ app.get("/api/object/:id", jsonParser, async (request, response) => {
     }
 });
 
-app.get("/api/user/:id", jsonParser, async (request, response) => {
+app.get("/api/user/:id", verfyToken, jsonParser, async (request, response) => {
     let id = new mongoose.Types.ObjectId(request.params.id);
     let userFilter = {password: false}
     let user = await UserInfo.findById(id, userFilter);
@@ -248,7 +248,7 @@ app.get("/api/user/:id", jsonParser, async (request, response) => {
     else response.status(200).send({user: user, objects: userObjects});
 });
 
-app.post("/api/newobject", upload.fields([{name: "pics", maxCount: 50}, {name: "files", maxCount: 50}, {name: "imagesStage", maxCount: 50}, {name: "filesStage", maxCount: 50}]), async (request, response) => {
+app.post("/api/newobject", verfyToken, upload.fields([{name: "pics", maxCount: 50}, {name: "files", maxCount: 50}, {name: "imagesStage", maxCount: 50}, {name: "filesStage", maxCount: 50}]), async (request, response) => {
 
     let imageInfo = JSON.parse(request.body.imagesInfo)    
     var object = JSON.parse(request.body.card);
@@ -308,7 +308,7 @@ app.post("/api/newobject", upload.fields([{name: "pics", maxCount: 50}, {name: "
 
 });
 
-app.put("/api/editobj/:id", jsonParser, async (request, response) => {
+app.put("/api/editobj/:id", verfyToken, jsonParser, async (request, response) => {
 
     let id = new ObjectID(request.params.id);
     update = request.body.objinf
@@ -324,14 +324,14 @@ app.put("/api/editobj/:id", jsonParser, async (request, response) => {
     else response.send(obj);
 });
 
-app.post("/api/findUser", jsonParser, async (request, response) => {
+app.post("/api/findUser", verfyToken, jsonParser, async (request, response) => {
     let req = `(?i)${request.body.name}(?-i)`;
     let users = await UserInfo.find().regex("name", req);
     if(users) response.send(users.map(el => el.name));
     else response.status(404);
 });
 
-app.post("/api/findObject", jsonParser, async (request, response) => {
+app.post("/api/findObject", verfyToken, jsonParser, async (request, response) => {
     let req = request.body.text;
     let text = req.split(" ").map(el => `(?i)${el}(?-i)`)
 
@@ -342,7 +342,7 @@ app.post("/api/findObject", jsonParser, async (request, response) => {
     else response.status(404);
 });
 
-app.post("/api/addMeetinig", jsonParser, async (request, response) => {
+app.post("/api/addMeetinig", verfyToken, jsonParser, async (request, response) => {
     let objects_id = request.body.objects_id; 
     let users_id = request.body.users_id;
     let objects = await ObjectInfo.find({_id: objects_id},{_id: true, factial_user: true});
@@ -362,7 +362,7 @@ app.post("/api/addMeetinig", jsonParser, async (request, response) => {
     else response.status(404);
 });
 
-app.post("/api/getMeetinigs/:id", jsonParser, async (request, response) => {
+app.post("/api/getMeetinigs/:id", verfyToken, jsonParser, async (request, response) => {
 
     let page = request.body.page
     page = !page ? 0 : page;
@@ -387,6 +387,29 @@ app.post("/api/getMeetinigs/:id", jsonParser, async (request, response) => {
     response.status(200).send({meetings:meetings, pages: countPage})
 
 });
+
+ function verfyToken(request, response, next) {
+    const header = request.headers["authorization"];
+    console.log("got " + header);
+    if (typeof header !== undefined && header) {
+      jwt.verify(header.split(" ")[1], "MIREAfan", async function (err, decoded) {
+        console.log(decoded);
+        if (err) {
+          response.status(401).send({});
+        } else if (decoded.exp <= Date.now()) {
+            let res = await UserInfo.findOne({email: decoded.login}, {email: true, _id: true});
+            console.log(res)
+            if (res.email === decoded.login) {
+                response.locals.id = res._id;
+                next();
+              }
+        }
+      });
+    }
+    else {
+      response.status(401).send({});
+    }
+  }
 
 main();
 
