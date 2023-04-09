@@ -320,8 +320,7 @@ app.post("/api/newobject", verfyToken, upload.fields([{name: "pics", maxCount: 5
     delete objectIn._id; delete objectIn.fact_us; delete objectIn.owner;
 
     await ObjectInfo.collection.insertOne(objectIn);
-    response.send("success")
-    response.status(200);}
+    response.status(200).send("success");}
     catch(err){
         response.status(404)
     }
