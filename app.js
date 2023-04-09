@@ -88,6 +88,27 @@ app.post("/api/user/login", jsonParser, async (request, response) => {
       }
 });
 
+app.post("/api/user/signup", jsonParser, async (request, response) => {
+    let { email, password, name } = request.body;
+    existUser = await UserInfo.findOne({email: email});
+    if(existUser) response.status(404);
+    else{
+        let user = await UserInfo.collection.insertOne(request.body)
+        if(user){
+            const code = jwt.sign(
+              { login: email },
+              "MIREAfan",
+              { expiresIn: 24 * 60 * 60 },
+              (err, token) => {
+                response.status(200).send({ key: token });
+              }
+            );
+          } else {
+            response.status(404).send({ key: undefined });
+          }
+    }
+});
+
 app.post("/api/page", jsonParser, async (request, response) => {
     let { page, sort, sortDirection, status, field, district, type, maxArea, minArea} = request.body;
     page = !page ? 0 : page;
