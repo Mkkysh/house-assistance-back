@@ -323,6 +323,9 @@ app.post(
       factial_user_name = factial_user_name.map((el) => el.name);
 
       let owner = await UserInfo.findOne({ name: owner_name }, { _id: true });
+      // if(!owner){
+      //   await 
+      // }
 
       let factial_user = await UserInfo.find({ name: factial_user_name });
       factial_user = factial_user.map((el) => el._id);
@@ -460,14 +463,14 @@ app.post("/api/addMeeting",verfyToken, jsonParser, async (request, response) => 
   else response.status(404);
 });
 
-app.post("/api/getMeetings/:id", verfyToken, jsonParser, async (request, response) => {
+app.post("/api/getMeetings", verfyToken, jsonParser, async (request, response) => {
 
   let page = request.body.page
   page = !page ? 0 : page;
 
   const pageCount = 2
 
-  let id = new mongoose.Types.ObjectId(request.params.id);
+  let id = request.locals._id;
   let meetings = await Meetings.find({users_id: id}).skip(page*pageCount).limit(pageCount);;
 
   for(i in meetings){
@@ -478,48 +481,14 @@ app.post("/api/getMeetings/:id", verfyToken, jsonParser, async (request, respons
       meetings[i] = {...meetings[i], objects: objects, users: users}
   }
 
-  let meeting = await Meetings.find({users_id: id});
+  let meeting = await Meetings.count({users_id: id});
   
-  let countPage = Math.ceil(meeting.length/pageCount);
+  let countPage = Math.ceil(meeting/pageCount);
 
   response.status(200).send({meetings:meetings, pages: countPage})
 
 });
 
-app.post(
-  "/api/getMeetings/:id",
-  verfyToken,
-  jsonParser,
-  async (request, response) => {
-    let page = request.body.page;
-    page = !page ? 0 : page;
-
-    const pageCount = 2;
-
-    let id = new mongoose.Types.ObjectId(request.params.id);
-    let meetings = await Meetings.find({ users_id: id })
-      .skip(page * pageCount)
-      .limit(pageCount);
-
-    for (i in meetings) {
-      let objects = await ObjectInfo.find(
-        { _id: meetings[i].objects_id },
-        { address: true, status: true, field: true, district: true, area: true }
-      );
-      let users = await UserInfo.find(
-        { _id: meetings[i].users_id },
-        { name: true }
-      );
-      meetings[i] = { ...meetings[i], objects: objects, users: users };
-    }
-
-    let meeting = await Meetings.find({ users_id: id });
-
-    let countPage = Math.ceil(meeting.length / pageCount);
-
-    response.status(200).send({ meetings: meetings, pages: countPage });
-  }
-);
 
 function verfyToken(request, response, next) {
   const header = request.headers["authorization"];
