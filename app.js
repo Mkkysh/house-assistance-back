@@ -437,37 +437,54 @@ app.post("/api/findUser", verfyToken, jsonParser, async (request, response) => {
   else response.status(404);
 });
 
-app.post(
-  "/api/addMeeting",
-  verfyToken,
-  jsonParser,
-  async (request, response) => {
-    let objects_id = request.body.objects_id;
-    let users_id = request.body.users_id;
-    let objects = await ObjectInfo.find(
-      { _id: objects_id },
-      { _id: true, factial_user: true }
-    );
-    console.log(objects);
-    if (objects) {
-      let users = [];
-      objects.forEach((elem) => users.push(...elem.factial_user));
+app.post("/api/addMeetinig",verfyToken, jsonParser, async (request, response) => {
+  let objects_ = request.body.objects; 
+  let users_id = request.body.users;
+  let objects = await ObjectInfo.find({address: objects_},{_id: true, factial_user: true});
+  console.log(objects)
+  if(objects) {
+          let users = [];
 
-      users.push(...users_id);
-      users = users.map((elem) => new mongoose.Types.ObjectId(elem));
-      objects_id = objects_id.map((elem) => new mongoose.Types.ObjectId(elem));
+          objects.forEach(elem => (users.push(...elem.factial_user)));
+          let users_req = await UserInfo.find({name: users_id}, {_id:true});
 
-      await Meetings.collection.insertOne({
-        ...request.body,
-        users_id: users,
-        objects_id: objects_id,
-        result: "",
-      });
+          users_req = users_req.map(elem => {return elem._id})
+          users.push(...users_req);
 
-      response.send(users);
-    } else response.status(404);
+          let objectsP = objects.map(elem => {return elem._id});
+
+          await Meetings.collection.insertOne({...request.body, users_id: users, objects_id: objectsP, result: ""});
+
+          response.send(users);
+      }
+  else response.status(404);
+});
+
+app.post("/api/getMeetinigs/:id", verfyToken, jsonParser, async (request, response) => {
+
+  let page = request.body.page
+  page = !page ? 0 : page;
+
+  const pageCount = 2
+
+  let id = new mongoose.Types.ObjectId(request.params.id);
+  let meetings = await Meetings.find({users_id: id}).skip(page*pageCount).limit(pageCount);;
+
+  for(i in meetings){
+      let objects = await ObjectInfo.find({_id: meetings[i].objects_id},
+          {address: true, status: true, field:true, district: true, area: true});
+      let users = await UserInfo.find({_id: meetings[i].users_id},
+              {name: true});
+      meetings[i] = {...meetings[i], objects: objects, users: users}
   }
-);
+
+  let meeting = await Meetings.find({users_id: id});
+  
+  let countPage = Math.ceil(meeting.length/pageCount);
+
+  response.status(200).send({meetings:meetings, pages: countPage})
+
+});
 
 app.post(
   "/api/getMeetinigs/:id",
