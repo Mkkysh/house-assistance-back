@@ -146,7 +146,7 @@ app.post("/api/user/signup", jsonParser, async (request, response) => {
 });
 
 app.post("/api/page", verfyToken, jsonParser, async (request, response) => {
-    let { page, sort, sortDirection, status, field, district, type, maxArea, minArea} = request.body;
+    let { page, sort, sortDirection, status, field, district, type, maxArea, minArea, address} = request.body;
     page = !page ? 0 : page;
     const count_objs = 20;
 
@@ -155,6 +155,9 @@ app.post("/api/page", verfyToken, jsonParser, async (request, response) => {
 
     if(type) filter.type = type; if(district) filter.district = district;
     if(field) filter.field = field; if(status) filter.status = status;
+
+    let reg = `(?i)${address}(?-i)`;
+
     if(maxArea||minArea)
         filter.$and = [];
     if(maxArea) filter.$and.push({area: {$lte: maxArea}}); if(minArea) filter.$and.push({area: {$gte: minArea}});
@@ -168,14 +171,21 @@ app.post("/api/page", verfyToken, jsonParser, async (request, response) => {
         pictures: {$slice: 1}
     }
 
+
     let objs = {}
 
     if (sort && (sortDirection!==undefined)){
         sorter[`${sort}`] = sortDirection;
-        objs = await ObjectInfo.find(filter, fields).sort(sorter).skip(page*count_objs).limit(count_objs);
+        if(address)
+            objs = await ObjectInfo.find(filter, fields).regex("address", reg).sort(sorter).skip(page*count_objs).limit(count_objs);
+        else
+            objs = await ObjectInfo.find(filter, fields).sort(sorter).skip(page*count_objs).limit(count_objs);
     }
     else 
-        objs = await ObjectInfo.find(filter, fields).skip(page*count_objs).limit(count_objs); 
+        if(address)
+            objs = await ObjectInfo.find(filter, fields).regex("address", reg).skip(page*count_objs).limit(count_objs); 
+        else
+            objs = await ObjectInfo.find(filter, fields).skip(page*count_objs).limit(count_objs); 
 
     let count = await ObjectInfo.count(filter)
 
@@ -414,9 +424,11 @@ app.post("/api/findFields", verfyToken, jsonParser, async (request, response) =>
 
 app.post("/api/findObject", verfyToken, jsonParser, async (request, response) => {
     let req =`(?i)${request.body.text}(?-i)`;
-    obj = await ObjectInfo.find({}).regex("address", req);
+    obj = await ObjectInfo.find({}, {address: true}).regex("address", req);
 
-    response.send(obj)
+    un_fields = obj.map(obj => obj.address).slice(0,7);
+
+    response.send(un_fields)
 });
 
 
