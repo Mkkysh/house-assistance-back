@@ -304,6 +304,7 @@ app.get("/api/user/:id", verfyToken, jsonParser, async (request, response) => {
   else response.status(200).send({ user: user, objects: userObjects });
 });
 
+<<<<<<< HEAD
 app.post(
   "/api/newobject",
   verfyToken,
@@ -321,11 +322,52 @@ app.post(
       let owner_name = object.fact_us[0].name;
       let factial_user_name = object.fact_us;
       factial_user_name = factial_user_name.map((el) => el.name);
+=======
+app.post("/api/newobject", upload.fields([{name: "pics", maxCount: 50}, {name: "files", maxCount: 50}, {name: "imagesStage", maxCount: 50}, {name: "filesStage", maxCount: 50}]), async (request, response) => {
+
+    try {let imageInfo = JSON.parse(request.body.imagesInfo)    
+    var object = JSON.parse(request.body.card);
+   
+    let owner_name = object.fact_us[0].name;
+    let factial_user_name = object.fact_us; 
+    factial_user_name = factial_user_name.map(el => el.name);
+    
+    let owner = await UserInfo.findOne({name: owner_name}, {_id: true});
+    if(!owner){
+        await UserInfo.collection.insertOne({
+            name: owner_name,
+            desc: "",
+            password: "",
+            email: "",
+            picture: "",
+            id_pr: "",
+            contacts: []
+        });
+    }
+>>>>>>> origin/main
 
       let owner = await UserInfo.findOne({ name: owner_name }, { _id: true });
 
+<<<<<<< HEAD
       let factial_user = await UserInfo.find({ name: factial_user_name });
       factial_user = factial_user.map((el) => el._id);
+=======
+    if(!factial_user){
+        factial_user_name.forEach(async el => {
+            await UserInfo.collection.insertOne({
+                name: el.name,
+                desc: "",
+                password: "",
+                email: "",
+                picture: "",
+                id_pr: "",
+                contacts: []
+            });
+        })
+    }
+
+    let pictures = request.files.pics; pictures = pictures.map(el => el.filename);
+>>>>>>> origin/main
 
       let pictures = request.files.pics;
       pictures = pictures.map((el) => el.filename);
@@ -345,6 +387,7 @@ app.post(
         object.stages[j].photos = photos;
       }
 
+<<<<<<< HEAD
       console.log(request.files);
 
       let files = request.files.files;
@@ -355,6 +398,13 @@ app.post(
           name: el.originalname.substring(0, el.originalname.indexOf(".")),
         };
       });
+=======
+    console.log(request.files)
+    
+    let files = request.files.files; files = files.map((el) => {
+        return {path: el.filename, exts: el.filename.substring(el.filename.indexOf(".")+1), name: el.originalname.substring(0,el.originalname.indexOf("."))}
+    });
+>>>>>>> origin/main
 
       let stagefiles = imageInfo.stagesFiles;
       let filesStage = request.files.filesStage;
@@ -402,11 +452,28 @@ app.post(
   }
 );
 
+<<<<<<< HEAD
 app.put(
   "/api/editobj/:id",
   verfyToken,
   jsonParser,
   async (request, response) => {
+=======
+    let objectIn = {...object, _id: undefined, documents: files, pictures: pictures, owner_id: owner, 
+                    factial_user: factial_user, owner: undefined, fact_us: undefined};
+    delete objectIn._id; delete objectIn.fact_us; delete objectIn.owner;
+
+    await ObjectInfo.collection.insertOne(objectIn);
+    response.status(200).send({key: true});}
+    catch(err){
+        response.status(404);
+    }
+
+});
+
+app.put("/api/editobj/:id", verfyToken, jsonParser, async (request, response) => {
+
+>>>>>>> origin/main
     let id = new ObjectID(request.params.id);
     update = request.body.objinf;
     let owner_id = request.body.objinf.owner_id;
@@ -437,6 +504,7 @@ app.post("/api/findUser", verfyToken, jsonParser, async (request, response) => {
   else response.status(404);
 });
 
+<<<<<<< HEAD
 app.post(
   "/api/addMeetinig",
   verfyToken,
@@ -463,6 +531,26 @@ app.post(
         objects_id: objects_id,
         result: "",
       });
+=======
+
+app.post("/api/addMeetinig",verfyToken, jsonParser, async (request, response) => {
+    let objects_ = request.body.objects; 
+    let users_id = request.body.users;
+    let objects = await ObjectInfo.find({address: objects_},{_id: true, factial_user: true});
+    console.log(objects)
+    if(objects) {
+            let users = [];
+
+            objects.forEach(elem => (users.push(...elem.factial_user)));
+            let users_req = await UserInfo.find({name: users_id}, {_id:true});
+
+            users_req = users_req.map(elem => {return elem._id})
+            users.push(...users_req);
+
+            let objectsP = objects.map(elem => {return elem._id});
+
+            await Meetings.collection.insertOne({...request.body, users_id: users, objects_id: objectsP, result: ""});
+>>>>>>> origin/main
 
       response.send(users);
     } else response.status(404);
