@@ -238,7 +238,11 @@ app.get("/api/object/:id", verfyToken ,jsonParser, async (request, response) => 
 });
 
 app.get("/api/user/:id", verfyToken, jsonParser, async (request, response) => {
-    let id = new mongoose.Types.ObjectId(request.params.id);
+    let id = request.params.id;
+
+    if(id!="0") id = new mongoose.Types.ObjectId(request.params.id);
+    else id = response.locals.id;
+
     let userFilter = {password: false}
     let user = await UserInfo.findById(id, userFilter);
     let fields = {
