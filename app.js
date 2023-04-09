@@ -374,6 +374,12 @@ app.post("/api/addMeetinig", jsonParser, async (request, response) => {
 
 main();
 
+app.get("/api/public/*", (req, res, next) => {
+    res.sendFile("uploads/" + req.path.substring(12).replace("%20", " "), {
+      root: __dirname,
+    });
+  });
+
 process.on("SIGINT", async() => {
     await mongoose.disconnect();
     console.log("Приложение завершило работу");
