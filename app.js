@@ -10,12 +10,16 @@ const Schema = mongoose.Schema;
 const MongoClient = require("mongodb").MongoClient;
 const multer = require("multer");
 const { Console } = require("console");
+const { captureRejectionSymbol } = require("events");
+const cors = require("cors");
 
 const parser = new XMLParser();
 const jsonParser = express.json();
 
 const PORT = 3000;
 const app = express();
+
+app.use(cors());
 
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
@@ -246,7 +250,7 @@ app.get("/api/user/:id", jsonParser, async (request, response) => {
 
 app.post("/api/newobject", upload.fields([{name: "pics", maxCount: 50}, {name: "files", maxCount: 50}, {name: "imagesStage", maxCount: 50}, {name: "filesStage", maxCount: 50}]), async (request, response) => {
 
-    try{let imageInfo = JSON.parse(request.body.imagesInfo)    
+    let imageInfo = JSON.parse(request.body.imagesInfo)    
     var object = JSON.parse(request.body.card);
    
     let owner_name = object.fact_us[0].name;
@@ -258,7 +262,7 @@ app.post("/api/newobject", upload.fields([{name: "pics", maxCount: 50}, {name: "
     let pictures = request.files.pics; pictures = pictures.map(el => el.filename);
 
     let stageInf = imageInfo.stagesImages;
-    let imagesStage = request.files.imagesStage
+    let imagesStage = request.files.imagesStage;
 
     let index = 0;
     let offset = 0;
@@ -272,10 +276,12 @@ app.post("/api/newobject", upload.fields([{name: "pics", maxCount: 50}, {name: "
         object.stages[j].photos = photos;
     }
 
-    let files = request.files.files; files = files.map((el) => {
-        return {path: el.filename, exts: el.filename.substring(el.filename.indexOf(".")+1), name: el.filename.substring(0,el.filename.indexOf("."))}
-    });
+    console.log(request.files)
+    response.status(200);
 
+    let files = request.files.files; files = files.map((el) => {
+        return {path: el.filename, exts: el.filename.substring(el.filename.indexOf(".")+1), name: el.originalname.substring(0,el.originalname.indexOf("."))}
+    });
 
     let stagefiles = imageInfo.stagesFiles;
     let filesStage = request.files.filesStage
@@ -288,8 +294,7 @@ app.post("/api/newobject", upload.fields([{name: "pics", maxCount: 50}, {name: "
         let doc = [];
         for(let i=offsetFile; i<indexFile;i++){
             doc.push({path: filesStage[i].filename, exts: filesStage[i]
-                .filename.substring(filesStage[i].filename.indexOf(".")+1), name: filesStage[i]
-                .filename.substring(0, filesStage[i].filename.indexOf("."))});
+                .filename.substring(filesStage[i].filename.indexOf(".")+1), name: filesStage[i].originalname.substring(0,filesStage[i].originalname.indexOf("."))});
         }
         object.stages[j].documents = doc;
     }
@@ -299,9 +304,7 @@ app.post("/api/newobject", upload.fields([{name: "pics", maxCount: 50}, {name: "
     delete objectIn._id; delete objectIn.fact_us; delete objectIn.owner;
 
     await ObjectInfo.collection.insertOne(objectIn);
-    response.status(200);}
-    catch(err){ response.status(404)}
-
+    response.status(200);
 
 });
 
@@ -359,22 +362,39 @@ app.post("/api/addMeetinig", jsonParser, async (request, response) => {
     else response.status(404);
 });
 
-app.get("/api/getMeetinigs/:id", jsonParser, async (request, response) => {
+app.post("/api/getMeetinigs/:id", jsonParser, async (request, response) => {
+
+    let page = request.body.page
+    page = !page ? 0 : page;
 
     const pageCount = 2
 
     let id = new mongoose.Types.ObjectId(request.params.id);
-    let meetings = await Meetings.find({users_id: id});
+    let meetings = await Meetings.find({users_id: id}).skip(page*pageCount).limit(pageCount);;
 
     for(i in meetings){
-        let objs = await ObjectInfo.find({_id: i.objects_id})
-        console.log(objs)
+        let objects = await ObjectInfo.find({_id: meetings[i].objects_id},
+            {address: true, status: true, field:true, district: true, area: true});
+        let users = await UserInfo.find({_id: meetings[i].users_id},
+                {name: true});
+        meetings[i] = {...meetings[i], objects: objects, users: users}
     }
+
+    let meeting = await Meetings.find({users_id: id});
     
+    let countPage = Math.ceil(meeting.length/pageCount);
+
+    response.status(200).send({meetings:meetings, pages: countPage})
 
 });
 
 main();
+
+app.get("/api/public/download/*", (req, res, next) => {
+    res.download("uploads/" + req.path.substring(21).replace("%20", " "), {
+      root: __dirname,
+    });
+  });
 
 app.get("/api/public/*", (req, res, next) => {
     res.sendFile("uploads/" + req.path.substring(12).replace("%20", " "), {
