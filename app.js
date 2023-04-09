@@ -331,16 +331,6 @@ app.post("/api/findUser", verfyToken, jsonParser, async (request, response) => {
     else response.status(404);
 });
 
-app.post("/api/findObject", verfyToken, jsonParser, async (request, response) => {
-    let req = request.body.text;
-    let text = req.split(" ").map(el => `(?i)${el}(?-i)`)
-
-    var obj1 = await ObjectInfo.find().regex("district", req)
-    var obj2 = await ObjectInfo.find().regex("field", req)
-
-    if(obj1||obj2) response.send([...obj1, ...obj2]);
-    else response.status(404);
-});
 
 app.post("/api/addMeetinig", verfyToken, jsonParser, async (request, response) => {
     let objects_id = request.body.objects_id; 
@@ -420,6 +410,13 @@ app.post("/api/findFields", verfyToken, jsonParser, async (request, response) =>
 
     response.send(un_fields);
 
+});
+
+app.post("/api/findObject", verfyToken, jsonParser, async (request, response) => {
+    let req =`(?i)${request.body.text}(?-i)`;
+    obj = await ObjectInfo.find({}).regex("address", req);
+
+    response.send(obj)
 });
 
 
