@@ -304,6 +304,24 @@ app.get("/api/user/:id", verfyToken, jsonParser, async (request, response) => {
   else response.status(200).send({ user: user, objects: userObjects });
 });
 
+app.get("/api/myObjects", verfyToken, jsonParser, async (request, response) => {
+      let id = response.locals.id;  
+
+      let fields = {
+        address: true,
+        status: true,
+        type: true,
+        area: true,
+        field: true,
+        pictures: { $slice: 1 },
+      };
+
+      let myObjs = await ObjectInfo.find({factial_user: id}, fields)
+
+      response.status(200).send(myObjs);
+
+});
+
 app.post(
   "/api/newobject",
   verfyToken,
