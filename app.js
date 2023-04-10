@@ -345,8 +345,6 @@ app.post(
 
       let owner = await UserInfo.findOne({ name: owner_name }, { _id: true });
 
-      
-
       if(!owner){
         await UserInfo.collection.insertOne({
           name: owner_name,
