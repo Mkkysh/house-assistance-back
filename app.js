@@ -21,6 +21,7 @@ const app = express();
 
 app.use(cors());
 
+
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
     cb(null, "uploads/");
@@ -323,8 +324,7 @@ app.get("/api/myObjects", verfyToken, jsonParser, async (request, response) => {
 });
 
 app.post(
-  "/api/newobject",
-  verfyToken,
+  "/api/newobject",verfyToken,
   upload.fields([
     { name: "pics", maxCount: 50 },
     { name: "files", maxCount: 50 },
@@ -333,8 +333,11 @@ app.post(
   ]),
   async (request, response) => {
     try {
+      
       let imageInfo = JSON.parse(request.body.imagesInfo);
       var object = JSON.parse(request.body.card);
+
+      console.log(object.fact_us)
 
       let owner_name = object.fact_us[0].name;
       let factial_user_name = object.fact_us;
@@ -342,6 +345,7 @@ app.post(
 
       let owner = await UserInfo.findOne({ name: owner_name }, { _id: true });
 
+      
 
       if(!owner){
         await UserInfo.collection.insertOne({
@@ -356,8 +360,23 @@ app.post(
       }
 
       let factial_user = await UserInfo.find({ name: factial_user_name });
+      console.log(factial_user)
       factial_user = factial_user.map((el) => el._id);
+      //console.log(factial_user)
 
+      if(factial_user.length < factial_user_name.length){
+        for(i in factial_user_name){
+          await UserInfo.collection.insertOne({
+            name: factial_user_name[i],
+            desc: "",
+            email: "",
+            picture: "",
+            password: "",
+            contacts: [],
+            id_pr:""
+          })
+        }
+      }
 
       let pictures = request.files.pics;
       pictures = pictures.map((el) => el.filename);
@@ -377,7 +396,7 @@ app.post(
         object.stages[j].photos = photos;
       }
 
-      console.log(request.files);
+      //console.log(request.files);
 
       let files = request.files.files;
       files = files.map((el) => {
@@ -460,6 +479,15 @@ app.put(
     if (!obj) response.status(404);
     else response.send(obj);
   }
+);
+
+app.get("/api/XML", jsonParser, async (request, response) => {
+
+
+    xml = fs.readFileSync("uploads/test.xml");
+    objs = parser.parse(xml);
+    response.send(objs)
+}
 );
 
 app.put("/api/setRes/:id", jsonParser, async (request, response) => {
