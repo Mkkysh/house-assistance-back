@@ -479,12 +479,13 @@ app.put(
   }
 );
 
-app.get("/api/XML", jsonParser, async (request, response) => {
-
-
-    xml = fs.readFileSync("uploads/test.xml");
-    objs = parser.parse(xml);
-    response.send(objs)
+app.get("/api/XML", upload.fields([
+  { name: "xml", maxCount: 50 },
+  { name: "files", maxCount: 50 }]), jsonParser, async (request, response) => {
+    
+    // xml = fs.readFileSync("uploads/test.xml");
+    // objs = parser.parse(xml);
+    response.send(request.body)
 }
 );
 
@@ -529,7 +530,7 @@ app.post("/api/addMeeting",verfyToken, jsonParser, async (request, response) => 
   else response.status(404);
 });
 
-app.post("/api/getMeetings", verfyToken, jsonParser, async (request, response) => {
+app.post("/api/getMeetings",verfyToken, jsonParser, async (request, response) => {
 
   let page = request.body.page
   page = !page ? 0 : page;
