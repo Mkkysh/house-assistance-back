@@ -450,7 +450,7 @@ app.put("/api/setRes/:id", jsonParser, async (request, response) => {
     let res = request.body.res;
     await Meetings.updateOne({ _id: id }, {result: res, status: "succeed"}, {new: true});
 
-    response.status(200);
+    response.status(200).send({key: true});
 
   }
 );
